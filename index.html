@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Öğrenci Bilgi Sistemi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Libre+Baskerville:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --navy:#0f1b2d;
+  --navy2:#162236;
+  --navy3:#1e2f47;
+  --navy4:#253858;
+  --accent:#3d8bff;
+  --accent2:#5fa3ff;
+  --gold:#f5c842;
+  --green:#3ecf8e;
+  --red:#ff6b6b;
+  --orange:#ffa94d;
+  --text:#e8edf5;
+  --text2:#8fa3c0;
+  --text3:#5c7899;
+  --border:rgba(61,139,255,0.15);
+  --border2:rgba(61,139,255,0.08);
+  --card:rgba(22,34,54,0.9);
+  --radius:8px;
+  --radius-lg:12px;
+}
+
+html{background:var(--navy);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;min-height:100vh}
+
+/* LAYOUT */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--navy2);border-right:1px solid var(--border2);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh}
+.main{flex:1;overflow-y:auto;background:var(--navy)}
+
+/* SIDEBAR */
+.logo{padding:20px 16px 16px;border-bottom:1px solid var(--border2)}
+.logo-mark{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.logo-name{font-family:'Libre Baskerville',serif;font-size:15px;color:var(--text);font-weight:700;line-height:1.3}
+
+.nav{padding:12px 0;flex:1}
+.nav-section{padding:6px 16px 4px;font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;transition:all .15s;color:var(--text2);font-size:13px;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(61,139,255,0.06)}
+.nav-item.active{color:var(--accent);background:rgba(61,139,255,0.1);border-left-color:var(--accent)}
+.nav-icon{width:16px;height:16px;opacity:.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border2)}
+.db-status{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text3)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(62,207,142,.5)}
+
+/* PAGES */
+.page{display:none;padding:28px 32px}
+.page.active{display:block}
+
+.page-header{margin-bottom:24px}
+.page-title{font-family:'Libre Baskerville',serif;font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text3)}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px}
+.stat-card{background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:16px 18px}
+.stat-label{font-size:11px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;color:var(--text);line-height:1}
+.stat-value.accent{color:var(--accent)}
+.stat-value.green{color:var(--green)}
+.stat-value.gold{color:var(--gold)}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* TABLE */
+.table-wrap{background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-lg);overflow:hidden}
+.table-head{padding:14px 20px;border-bottom:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center}
+.table-title{font-size:13px;font-weight:500;color:var(--text2)}
+table{width:100%;border-collapse:collapse}
+thead tr{background:rgba(15,27,45,.6)}
+th{padding:10px 16px;text-align:left;font-size:11px;color:var(--text3);font-weight:500;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border2)}
+td{padding:11px 16px;font-size:13px;color:var(--text2);border-bottom:1px solid var(--border2)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(61,139,255,.04)}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;font-family:'IBM Plex Mono',monospace}
+.badge.aa{background:rgba(62,207,142,.15);color:#3ecf8e}
+.badge.ba{background:rgba(62,207,142,.1);color:#6eddb0}
+.badge.bb{background:rgba(95,163,255,.12);color:#5fa3ff}
+.badge.cb{background:rgba(95,163,255,.08);color:#7db9ff}
+.badge.cc{background:rgba(245,200,66,.12);color:#f5c842}
+.badge.dc{background:rgba(245,200,66,.08);color:#f7d572}
+.badge.dd{background:rgba(255,169,77,.12);color:#ffa94d}
+.badge.fd,.badge.ff{background:rgba(255,107,107,.12);color:#ff6b6b}
+.badge.gecti{background:rgba(62,207,142,.12);color:#3ecf8e}
+.badge.kaldi{background:rgba(255,107,107,.12);color:#ff6b6b}
+
+/* GNO BAR */
+.gno-bar{display:flex;align-items:center;gap:8px}
+.gno-track{width:60px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+.gno-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .3s}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-field{display:flex;flex-direction:column;gap:6px}
+.form-field.full{grid-column:1/-1}
+label{font-size:12px;color:var(--text3);font-weight:500;letter-spacing:.3px}
+input,select{background:var(--navy3);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s}
+input:focus,select:focus{border-color:var(--accent)}
+select option{background:var(--navy2)}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:none;font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-danger{background:transparent;border:1px solid rgba(255,107,107,.3);color:var(--red)}
+.btn-danger:hover{background:rgba(255,107,107,.1)}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal-title{font-family:'Libre Baskerville',serif;font-size:17px;font-weight:700;margin-bottom:20px;color:var(--text);display:flex;justify-content:space-between;align-items:center}
+.modal-close{cursor:pointer;color:var(--text3);font-size:20px;line-height:1;background:none;border:none;color:var(--text3)}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border2)}
+
+/* TRANSCRIPT */
+.transcript-header{background:var(--navy3);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:20px}
+.transcript-name{font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:2px}
+.transcript-meta{font-size:12px;color:var(--text3);margin-bottom:14px}
+.transcript-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ts-block{text-align:center;padding:10px;background:rgba(15,27,45,.5);border-radius:var(--radius)}
+.ts-val{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500;color:var(--text)}
+.ts-lbl{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+
+/* NOTIFY */
+.notify{position:fixed;top:20px;right:20px;background:var(--navy2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 18px;font-size:13px;color:var(--text);z-index:999;transform:translateX(120%);transition:transform .25s;max-width:320px}
+.notify.show{transform:none}
+.notify.success{border-color:rgba(62,207,142,.4);background:rgba(62,207,142,.08)}
+.notify.error{border-color:rgba(255,107,107,.4);background:rgba(255,107,107,.08)}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px;color:var(--text3);font-size:13px}
+.empty-icon{font-size:32px;margin-bottom:10px}
+
+/* SECTION */
+.section-gap{margin-bottom:24px}
+.divider{height:1px;background:var(--border2);margin:20px 0}
+
+/* INPUT ROW */
+.input-row{display:flex;gap:12px;align-items:flex-end;margin-bottom:16px}
+.input-row .form-field{flex:1}
+
+/* SEARCH */
+.search-wrap{position:relative;flex:1}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none}
+.search-wrap input{padding-left:34px;width:100%}
+
+/* AI PANEL */
+.ai-panel{background:linear-gradient(135deg,rgba(61,139,255,.06),rgba(61,139,255,.02));border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:24px}
+.ai-label{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:1px;font-weight:500;margin-bottom:6px}
+.ai-content{font-size:13px;color:var(--text2);line-height:1.7}
+.ai-loading{color:var(--text3);font-style:italic}
+.ai-btn{margin-top:10px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="logo-name">Öğrenci Bilgi Sistemi</div>
+    </div>
+    <div class="nav">
+      <div class="nav-section">Yönetim</div>
+      <div class="nav-item active" data-page="dashboard" onclick="goPage('dashboard',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Genel Bakış
+      </div>
+      <div class="nav-item" data-page="ogrenciler" onclick="goPage('ogrenciler',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Öğrenciler
+      </div>
+      <div class="nav-item" data-page="dersler" onclick="goPage('dersler',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Dersler
+      </div>
+      <div class="nav-item" data-page="notlar" onclick="goPage('notlar',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Not Girişi
+      </div>
+      <div class="nav-section">Raporlar</div>
+      <div class="nav-item" data-page="transkript" onclick="goPage('transkript',this)">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Transkript
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="db-status"><div class="dot"></div>SQLite bağlı</div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <section class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">Genel Bakış</div>
+        <div class="page-sub">Tüm bölümlerin özet istatistikleri</div>
+      </div>
+      <div class="stats-grid" id="dash-stats">
+        <div class="stat-card"><div class="stat-label">Toplam Öğrenci</div><div class="stat-value accent" id="s-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">Toplam Ders</div><div class="stat-value" id="s-ders">—</div></div>
+        <div class="stat-card"><div class="stat-label">Ortalama GNO</div><div class="stat-value gold" id="s-gno">—</div></div>
+        <div class="stat-card"><div class="stat-label">Geçme Oranı</div><div class="stat-value green" id="s-gecme">—</div></div>
+      </div>
+
+      <div class="ai-panel">
+        <div class="ai-label">✦ AI Analiz</div>
+        <div class="ai-content ai-loading" id="ai-dash">Veri yükleniyor...</div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-head"><span class="table-title">Bölüm Bazlı İstatistikler</span></div>
+        <table><thead><tr><th>Bölüm</th><th>Öğrenci</th><th>Ort. Not</th></tr></thead>
+        <tbody id="bolum-tablo"></tbody></table>
+      </div>
+    </section>
+
+    <!-- ÖĞRENCİLER -->
+    <section class="page" id="page-ogrenciler">
+      <div class="page-header">
+        <div class="page-title">Öğrenci Yönetimi</div>
+        <div class="page-sub">Kayıtlı öğrencileri görüntüle ve yönet</div>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:18px;align-items:center">
+        <div class="search-wrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="ogrenci-search" placeholder="Ad, soyad veya numara ile ara..." oninput="filterOgrenciler()">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-ogrenci-ekle')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Yeni Öğrenci
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Öğr. No</th><th>Ad Soyad</th><th>Bölüm</th><th>GNO</th><th>Kredi</th><th>Kayıt</th><th></th></tr></thead>
+          <tbody id="ogrenci-tablo"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DERSLER -->
+    <section class="page" id="page-dersler">
+      <div class="page-header">
+        <div class="page-title">Ders Yönetimi</div>
+        <div class="page-sub">Müfredattaki dersler</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <button class="btn btn-primary" onclick="openModal('modal-ders-ekle')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Yeni Ders
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Kod</th><th>Ders Adı</th><th>Kredi</th></tr></thead>
+          <tbody id="ders-tablo"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- NOT GİRİŞİ -->
+    <section class="page" id="page-notlar">
+      <div class="page-header">
+        <div class="page-title">Not Girişi / Güncelleme</div>
+        <div class="page-sub">Öğrenci notlarını gir veya güncelle</div>
+      </div>
+      <div class="table-wrap" style="max-width:540px">
+        <div class="table-head"><span class="table-title">Not Formu</span></div>
+        <div style="padding:20px">
+          <div class="form-grid">
+            <div class="form-field full">
+              <label>Öğrenci</label>
+              <select id="not-ogrenci" onchange="loadOgrenciNotlari()"><option value="">— Seçiniz —</option></select>
+            </div>
+            <div class="form-field full">
+              <label>Ders</label>
+              <select id="not-ders"><option value="">— Seçiniz —</option></select>
+            </div>
+            <div class="form-field">
+              <label>Vize Notu (0–100)</label>
+              <input type="number" id="not-vize" min="0" max="100" placeholder="0" oninput="previewNot()">
+            </div>
+            <div class="form-field">
+              <label>Final Notu (0–100)</label>
+              <input type="number" id="not-final" min="0" max="100" placeholder="0" oninput="previewNot()">
+            </div>
+          </div>
+          <div id="not-preview" style="margin:14px 0;padding:12px;background:var(--navy3);border-radius:var(--radius);display:none;font-size:13px;color:var(--text2)"></div>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <button class="btn btn-primary" onclick="kaydetNot()">Kaydet / Güncelle</button>
+            <button class="btn btn-secondary" onclick="clearNotForm()">Temizle</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div id="ogrenci-notlari-wrap" style="display:none">
+        <div class="page-title" style="font-size:16px;margin-bottom:14px" id="notlar-ogrenci-adi"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ders</th><th>Kredi</th><th>Vize</th><th>Final</th><th>Ort.</th><th>Harf</th><th>Durum</th></tr></thead>
+            <tbody id="ogrenci-notlari-tablo"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRANSKRİPT -->
+    <section class="page" id="page-transkript">
+      <div class="page-header">
+        <div class="page-title">Transkript</div>
+        <div class="page-sub">Öğrenci not dökümü</div>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:20px;align-items:flex-end">
+        <div class="form-field" style="flex:1;max-width:260px">
+          <label>Öğrenci Seç</label>
+          <select id="transkript-ogrenci"><option value="">— Seçiniz —</option></select>
+        </div>
+        <button class="btn btn-primary" onclick="gosterTranskript()">Transkript Görüntüle</button>
+      </div>
+      <div id="transkript-wrap" style="display:none">
+        <div class="transcript-header">
+          <div class="transcript-name" id="tr-name"></div>
+          <div class="transcript-meta" id="tr-meta"></div>
+          <div class="transcript-stats">
+            <div class="ts-block"><div class="ts-val" id="tr-gno">—</div><div class="ts-lbl">GNO</div></div>
+            <div class="ts-block"><div class="ts-val" id="tr-kredi">—</div><div class="ts-lbl">Kredi</div></div>
+            <div class="ts-block"><div class="ts-val" id="tr-gecti" style="color:var(--green)">—</div><div class="ts-lbl">Geçti</div></div>
+            <div class="ts-block"><div class="ts-val" id="tr-kaldi" style="color:var(--red)">—</div><div class="ts-lbl">Kaldı</div></div>
+          </div>
+        </div>
+        <div class="ai-panel">
+          <div class="ai-label">✦ AI Değerlendirme</div>
+          <div class="ai-content" id="ai-transkript">Transkript yükleniyor...</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Kod</th><th>Ders Adı</th><th>Kredi</th><th>Vize</th><th>Final</th><th>Ort.</th><th>Harf</th><th>Durum</th></tr></thead>
+            <tbody id="transkript-tablo"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="modal-ogrenci-ekle">
+  <div class="modal">
+    <div class="modal-title">Yeni Öğrenci Kaydı <button class="modal-close" onclick="closeModal('modal-ogrenci-ekle')">×</button></div>
+    <div class="form-grid">
+      <div class="form-field"><label>Öğrenci No</label><input type="text" id="ekle-no" placeholder="2024001"></div>
+      <div class="form-field"><label>Bölüm</label><input type="text" id="ekle-bolum" placeholder="Bilgisayar Mühendisliği"></div>
+      <div class="form-field"><label>Ad</label><input type="text" id="ekle-ad" placeholder="Ahmet"></div>
+      <div class="form-field"><label>Soyad</label><input type="text" id="ekle-soyad" placeholder="Yılmaz"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-ogrenci-ekle')">İptal</button>
+      <button class="btn btn-primary" onclick="kaydetOgrenci()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-ders-ekle">
+  <div class="modal">
+    <div class="modal-title">Yeni Ders Ekle <button class="modal-close" onclick="closeModal('modal-ders-ekle')">×</button></div>
+    <div class="form-grid">
+      <div class="form-field"><label>Ders Kodu</label><input type="text" id="ekle-ders-kod" placeholder="MAT101"></div>
+      <div class="form-field"><label>Kredi</label><input type="number" id="ekle-ders-kredi" min="1" max="8" value="3"></div>
+      <div class="form-field full"><label>Ders Adı</label><input type="text" id="ekle-ders-ad" placeholder="Matematik I"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-ders-ekle')">İptal</button>
+      <button class="btn btn-primary" onclick="kaydetDers()">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<div class="notify" id="notify"></div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────
+const STATE = {
+  ogrenciler: [],
+  dersler: [],
+  notlar: {},   // ogrenci_id -> [not objeleri]
+};
+
+// ── VERI: başlangıç demo verisi ───────────────────────────────────
+function initData() {
+  STATE.dersler = [
+    {id:1,kod:"MAT101",ad:"Matematik I",kredi:4},
+    {id:2,kod:"LCB101",ad:"Lineer Cebir",kredi:3},
+    {id:3,kod:"BIL101",ad:"Programlamaya Giriş",kredi:3},
+    {id:4,kod:"TUR101",ad:"Türk Dili I",kredi:2},
+    {id:5,kod:"ING101",ad:"İngilizce I",kredi:3},
+    {id:6,kod:"MAT102",ad:"Matematik II",kredi:4},
+    {id:7,kod:"NDP101",ad:"Nesneye Dayalı Programlama",kredi:3},
+  ];
+  STATE.ogrenciler = [
+    {id:1,no:"2024001",ad:"Ahmet",soyad:"Yılmaz",bolum:"Yazılım Geliştirme",kayit:"2024-09-01"},
+    {id:2,no:"2024002",ad:"Fatma",soyad:"Kaya",bolum:"Veri Bilimi ve Analitiği",kayit:"2024-09-01"},
+    {id:3,no:"2024003",ad:"Mehmet",soyad:"Demir",bolum:"Bilişim Sistemleri ve Teknolojileri",kayit:"2024-09-01"},
+    {id:4,no:"2024004",ad:"Zeynep",soyad:"Çelik",bolum:"Yazılım Geliştirme",kayit:"2024-09-01"},
+    {id:5,no:"2023001",ad:"Ali",soyad:"Şahin",bolum:"Veri Bilimi ve Analitiği",kayit:"2023-09-01"},
+  ];
+  STATE.notlar = {
+    1:[{did:1,vize:85,final:90},{did:2,vize:70,final:75},{did:3,vize:95,final:98},{did:4,vize:80,final:85},{did:5,vize:60,final:65}],
+    2:[{did:1,vize:55,final:60},{did:2,vize:88,final:92},{did:3,vize:75,final:80},{did:4,vize:70,final:75},{did:5,vize:90,final:95}],
+    3:[{did:1,vize:40,final:45},{did:2,vize:65,final:70},{did:3,vize:80,final:85},{did:4,vize:75,final:80},{did:5,vize:55,final:60}],
+    4:[{did:1,vize:92,final:95},{did:3,vize:88,final:91},{did:5,vize:78,final:82}],
+    5:[{did:1,vize:72,final:78},{did:2,vize:68,final:73},{did:6,vize:65,final:70},{did:7,vize:60,final:65}],
+  };
+}
+
+// ── HESAPLAMA ─────────────────────────────────────────────────────
+function ort(v,f){return Math.round((v*0.4+f*0.6)*100)/100}
+function harfNotu(o){
+  if(o>=90)return"AA";if(o>=85)return"BA";if(o>=80)return"BB";
+  if(o>=75)return"CB";if(o>=70)return"CC";if(o>=65)return"DC";
+  if(o>=60)return"DD";if(o>=50)return"FD";return"FF";
+}
+function gectiMi(o){return o>=60}
+function getDers(id){return STATE.dersler.find(d=>d.id===id)}
+function getOgrenci(id){return STATE.ogrenciler.find(o=>o.id===id)}
+function gnoHesapla(oid){
+  const notlar=STATE.notlar[oid]||[];
+  let topKredi=0,agirlikli=0;
+  for(const n of notlar){
+    const d=getDers(n.did);if(!d)continue;
+    const o2=ort(n.vize,n.final);
+    if(gectiMi(o2)){topKredi+=d.kredi}
+    agirlikli+=o2*d.kredi;
+  }
+  const tumKredi=notlar.reduce((s,n)=>{const d=getDers(n.did);return s+(d?d.kredi:0)},0);
+  if(!tumKredi)return 0;
+  return Math.round(agirlikli/tumKredi*100)/100;
+}
+function toplamGecilenKredi(oid){
+  return (STATE.notlar[oid]||[]).reduce((s,n)=>{
+    const d=getDers(n.did);
+    return s+(d&&gectiMi(ort(n.vize,n.final))?d.kredi:0);
+  },0);
+}
+
+// ── NAVİGASYON ────────────────────────────────────────────────────
+function goPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='dashboard')renderDashboard();
+  if(id==='ogrenciler')renderOgrenciler();
+  if(id==='dersler')renderDersler();
+  if(id==='notlar')renderNotPage();
+  if(id==='transkript')renderTranskriptPage();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────
+function renderDashboard(){
+  const total=STATE.ogrenciler.length;
+  const dersTotal=STATE.dersler.length;
+  let allOrts=[];
+  STATE.ogrenciler.forEach(o=>{
+    (STATE.notlar[o.id]||[]).forEach(n=>allOrts.push(ort(n.vize,n.final)));
+  });
+  const avgGno=allOrts.length?Math.round(allOrts.reduce((a,b)=>a+b,0)/allOrts.length*100)/100:0;
+  const gecme=allOrts.length?Math.round(allOrts.filter(o=>gectiMi(o)).length/allOrts.length*100):0;
+
+  document.getElementById('s-total').textContent=total;
+  document.getElementById('s-ders').textContent=dersTotal;
+  document.getElementById('s-gno').textContent=avgGno.toFixed(2);
+  document.getElementById('s-gecme').textContent=gecme+'%';
+
+  // Bölüm tablosu
+  const bolumler={};
+  STATE.ogrenciler.forEach(o=>{
+    if(!bolumler[o.bolum])bolumler[o.bolum]={sayi:0,ortsArr:[]};
+    bolumler[o.bolum].sayi++;
+    (STATE.notlar[o.id]||[]).forEach(n=>bolumler[o.bolum].ortsArr.push(ort(n.vize,n.final)));
+  });
+  const tbody=document.getElementById('bolum-tablo');
+  tbody.innerHTML=Object.entries(bolumler).map(([b,v])=>{
+    const avg=v.ortsArr.length?Math.round(v.ortsArr.reduce((a,c)=>a+c,0)/v.ortsArr.length*100)/100:0;
+    const barW=Math.round(avg);
+    return`<tr><td style="color:var(--text)">${b}</td><td>${v.sayi}</td>
+    <td><div class="gno-bar"><div class="gno-track"><div class="gno-fill" style="width:${barW}%"></div></div><span style="font-family:'IBM Plex Mono',monospace;font-size:12px">${avg}</span></div></td></tr>`;
+  }).join('');
+
+  aiDashAnaliz(total,dersTotal,avgGno,gecme,bolumler);
+}
+
+async function aiDashAnaliz(total,dersTotal,avgGno,gecme,bolumler){
+  const el=document.getElementById('ai-dash');
+  el.textContent='Analiz yapılıyor...';
+  el.className='ai-content ai-loading';
+  const summary=`Öğrenci sayısı: ${total}, Ders: ${dersTotal}, Genel Not Ort.: ${avgGno}, Geçme oranı: ${gecme}%. Bölümler: ${Object.entries(bolumler).map(([b,v])=>b+' ('+v.sayi+' öğrenci)').join(', ')}.`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:250,
+        system:'Sen bir üniversite akademik danışmanısın. Türkçe, 2-3 cümlelik kısa ve yapıcı analizler yaz. Madde işareti kullanma.',
+        messages:[{role:'user',content:`Bu öğrenci bilgi sistemi verilerini analiz et ve özet değerlendirme yap: ${summary}`}]
+      })
+    });
+    const data=await resp.json();
+    const txt=data.content?.find(c=>c.type==='text')?.text||'Analiz yapılamadı.';
+    el.textContent=txt;
+    el.className='ai-content';
+  }catch(e){el.textContent='AI analizi şu an kullanılamıyor.';el.className='ai-content'}
+}
+
+// ── ÖĞRENCİLER ───────────────────────────────────────────────────
+function renderOgrenciler(filter=''){
+  const tbody=document.getElementById('ogrenci-tablo');
+  const list=STATE.ogrenciler.filter(o=>{
+    if(!filter)return true;
+    const q=filter.toLowerCase();
+    return o.no.includes(q)||(o.ad+' '+o.soyad).toLowerCase().includes(q)||o.bolum.toLowerCase().includes(q);
+  });
+  if(!list.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><div class="empty-icon">👤</div>Öğrenci bulunamadı.</div></td></tr>`;return}
+  tbody.innerHTML=list.map(o=>{
+    const gno=gnoHesapla(o.id);
+    const kredi=toplamGecilenKredi(o.id);
+    const gnoColor=gno>=70?'var(--green)':gno>=50?'var(--gold)':'var(--red)';
+    return`<tr>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent)">${o.no}</td>
+      <td style="color:var(--text);font-weight:500">${o.ad} ${o.soyad}</td>
+      <td>${o.bolum}</td>
+      <td><span style="font-family:'IBM Plex Mono',monospace;color:${gnoColor}">${gno.toFixed(2)}</span></td>
+      <td style="font-family:'IBM Plex Mono',monospace">${kredi}</td>
+      <td style="color:var(--text3);font-size:12px">${o.kayit}</td>
+      <td><button class="btn btn-sm btn-secondary" onclick="goTranskript(${o.id})">Transkript</button></td>
+    </tr>`;
+  }).join('');
+}
+function filterOgrenciler(){renderOgrenciler(document.getElementById('ogrenci-search').value)}
+function goTranskript(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('page-transkript').classList.add('active');
+  document.querySelector('[data-page="transkript"]').classList.add('active');
+  renderTranskriptPage();
+  document.getElementById('transkript-ogrenci').value=id;
+  gosterTranskript();
+}
+
+// ── DERSLER ───────────────────────────────────────────────────────
+function renderDersler(){
+  const tbody=document.getElementById('ders-tablo');
+  tbody.innerHTML=STATE.dersler.map(d=>`<tr>
+    <td style="font-family:'IBM Plex Mono',monospace;color:var(--accent)">${d.kod}</td>
+    <td style="color:var(--text)">${d.ad}</td>
+    <td style="font-family:'IBM Plex Mono',monospace">${d.kredi}</td>
+  </tr>`).join('');
+}
+
+// ── NOT SAYFASI ───────────────────────────────────────────────────
+function renderNotPage(){
+  const oSel=document.getElementById('not-ogrenci');
+  oSel.innerHTML='<option value="">— Seçiniz —</option>'+
+    STATE.ogrenciler.map(o=>`<option value="${o.id}">${o.no} — ${o.ad} ${o.soyad}</option>`).join('');
+  const dSel=document.getElementById('not-ders');
+  dSel.innerHTML='<option value="">— Seçiniz —</option>'+
+    STATE.dersler.map(d=>`<option value="${d.id}">${d.kod} — ${d.ad}</option>`).join('');
+}
+function loadOgrenciNotlari(){
+  const oid=+document.getElementById('not-ogrenci').value;
+  if(!oid){document.getElementById('ogrenci-notlari-wrap').style.display='none';return}
+  const o=getOgrenci(oid);
+  document.getElementById('notlar-ogrenci-adi').textContent=`${o.ad} ${o.soyad} — Mevcut Notlar`;
+  const tbody=document.getElementById('ogrenci-notlari-tablo');
+  const notlar=STATE.notlar[oid]||[];
+  if(!notlar.length){tbody.innerHTML='<tr><td colspan="7" class="empty">Henüz not girilmemiş.</td></tr>'}
+  else{
+    tbody.innerHTML=notlar.map(n=>{
+      const d=getDers(n.did);const o2=ort(n.vize,n.final);const h=harfNotu(o2);
+      return`<tr><td style="color:var(--accent)">${d?.kod}</td><td>${d?.ad}</td><td>${d?.kredi}</td>
+        <td>${n.vize}</td><td>${n.final}</td>
+        <td style="font-family:'IBM Plex Mono',monospace">${o2}</td>
+        <td><span class="badge ${h.toLowerCase()}">${h}</span></td>
+        <td><span class="badge ${gectiMi(o2)?'gecti':'kaldi'}">${gectiMi(o2)?'Geçti':'Kaldı'}</span></td></tr>`;
+    }).join('');
+  }
+  document.getElementById('ogrenci-notlari-wrap').style.display='block';
+}
+function previewNot(){
+  const v=+document.getElementById('not-vize').value;
+  const f=+document.getElementById('not-final').value;
+  const el=document.getElementById('not-preview');
+  if(!v&&!f){el.style.display='none';return}
+  const o2=ort(v,f);const h=harfNotu(o2);
+  el.style.display='block';
+  el.innerHTML=`Hesaplanan Ortalama: <strong style="color:var(--text)">${o2}</strong>  |  Harf Notu: <span class="badge ${h.toLowerCase()}">${h}</span>  |  <span class="badge ${gectiMi(o2)?'gecti':'kaldi'}">${gectiMi(o2)?'Geçti':'Kaldı'}</span>`;
+}
+function kaydetNot(){
+  const oid=+document.getElementById('not-ogrenci').value;
+  const did=+document.getElementById('not-ders').value;
+  const v=+document.getElementById('not-vize').value;
+  const f=+document.getElementById('not-final').value;
+  if(!oid||!did)return notify('Öğrenci ve ders seçiniz.','error');
+  if(v<0||v>100||f<0||f>100)return notify('Notlar 0-100 arasında olmalı.','error');
+  if(!STATE.notlar[oid])STATE.notlar[oid]=[];
+  const idx=STATE.notlar[oid].findIndex(n=>n.did===did);
+  if(idx>=0)STATE.notlar[oid][idx]={did,vize:v,final:f};
+  else STATE.notlar[oid].push({did,vize:v,final:f});
+  loadOgrenciNotlari();
+  notify('Not kaydedildi.','success');
+}
+function clearNotForm(){
+  document.getElementById('not-ogrenci').value='';
+  document.getElementById('not-ders').value='';
+  document.getElementById('not-vize').value='';
+  document.getElementById('not-final').value='';
+  document.getElementById('not-preview').style.display='none';
+  document.getElementById('ogrenci-notlari-wrap').style.display='none';
+}
+
+// ── TRANSKRİPT ───────────────────────────────────────────────────
+function renderTranskriptPage(){
+  const sel=document.getElementById('transkript-ogrenci');
+  sel.innerHTML='<option value="">— Seçiniz —</option>'+
+    STATE.ogrenciler.map(o=>`<option value="${o.id}">${o.no} — ${o.ad} ${o.soyad}</option>`).join('');
+}
+function gosterTranskript(){
+  const oid=+document.getElementById('transkript-ogrenci').value;
+  if(!oid)return notify('Öğrenci seçiniz.','error');
+  const o=getOgrenci(oid);
+  const notlar=STATE.notlar[oid]||[];
+  const gno=gnoHesapla(oid);
+  const kredi=toplamGecilenKredi(oid);
+  const gecti=notlar.filter(n=>gectiMi(ort(n.vize,n.final))).length;
+  const kaldi=notlar.length-gecti;
+  document.getElementById('tr-name').textContent=`${o.ad} ${o.soyad}`;
+  document.getElementById('tr-meta').textContent=`${o.no}  ·  ${o.bolum}  ·  Kayıt: ${o.kayit}`;
+  document.getElementById('tr-gno').textContent=gno.toFixed(2);
+  document.getElementById('tr-kredi').textContent=kredi;
+  document.getElementById('tr-gecti').textContent=gecti;
+  document.getElementById('tr-kaldi').textContent=kaldi;
+  const tbody=document.getElementById('transkript-tablo');
+  if(!notlar.length){tbody.innerHTML='<tr><td colspan="8" class="empty">Kayıtlı not yok.</td></tr>'}
+  else{
+    tbody.innerHTML=notlar.map(n=>{
+      const d=getDers(n.did);const o2=ort(n.vize,n.final);const h=harfNotu(o2);
+      return`<tr>
+        <td style="font-family:'IBM Plex Mono',monospace;color:var(--accent)">${d?.kod}</td>
+        <td style="color:var(--text)">${d?.ad}</td>
+        <td>${d?.kredi}</td>
+        <td>${n.vize}</td>
+        <td>${n.final}</td>
+        <td style="font-family:'IBM Plex Mono',monospace;font-weight:500">${o2}</td>
+        <td><span class="badge ${h.toLowerCase()}">${h}</span></td>
+        <td><span class="badge ${gectiMi(o2)?'gecti':'kaldi'}">${gectiMi(o2)?'Geçti':'Kaldı'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+  document.getElementById('transkript-wrap').style.display='block';
+  aiTranskriptAnaliz(o,gno,kredi,gecti,kaldi,notlar);
+}
+async function aiTranskriptAnaliz(o,gno,kredi,gecti,kaldi,notlar){
+  const el=document.getElementById('ai-transkript');
+  el.textContent='Değerlendirme yapılıyor...';
+  const dersOzet=notlar.map(n=>{
+    const d=getDers(n.did);const o2=ort(n.vize,n.final);
+    return`${d?.ad}: Vize=${n.vize}, Final=${n.final}, Ort=${o2} (${harfNotu(o2)})`;
+  }).join('; ');
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:300,
+        system:'Sen bir üniversite akademik danışmanısın. Öğrenci performansını Türkçe olarak 2-3 cümlede değerlendir. Güçlü ve zayıf noktaları belirt. Madde işareti kullanma.',
+        messages:[{role:'user',content:`Öğrenci: ${o.ad} ${o.soyad}, Bölüm: ${o.bolum}, GNO: ${gno}, Geçilen Kredi: ${kredi}, Geçen Ders: ${gecti}, Kalan Ders: ${kaldi}. Ders notları: ${dersOzet}. Bu öğrenci için akademik değerlendirme yap.`}]
+      })
+    });
+    const data=await resp.json();
+    el.textContent=data.content?.find(c=>c.type==='text')?.text||'Değerlendirme yapılamadı.';
+  }catch(e){el.textContent='AI değerlendirmesi şu an kullanılamıyor.'}
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-bg').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')})})
+
+function kaydetOgrenci(){
+  const no=document.getElementById('ekle-no').value.trim();
+  const ad=document.getElementById('ekle-ad').value.trim();
+  const soyad=document.getElementById('ekle-soyad').value.trim();
+  const bolum=document.getElementById('ekle-bolum').value.trim();
+  if(!no||!ad||!soyad||!bolum)return notify('Tüm alanları doldurunuz.','error');
+  if(STATE.ogrenciler.find(o=>o.no===no))return notify('Bu numara zaten kayıtlı.','error');
+  const id=Math.max(0,...STATE.ogrenciler.map(o=>o.id))+1;
+  STATE.ogrenciler.push({id,no,ad,soyad,bolum,kayit:new Date().toISOString().slice(0,10)});
+  closeModal('modal-ogrenci-ekle');
+  ['ekle-no','ekle-ad','ekle-soyad','ekle-bolum'].forEach(f=>document.getElementById(f).value='');
+  renderOgrenciler();
+  notify('Öğrenci kaydedildi.','success');
+}
+function kaydetDers(){
+  const kod=document.getElementById('ekle-ders-kod').value.trim().toUpperCase();
+  const ad=document.getElementById('ekle-ders-ad').value.trim();
+  const kredi=+document.getElementById('ekle-ders-kredi').value;
+  if(!kod||!ad||!kredi)return notify('Tüm alanları doldurunuz.','error');
+  if(STATE.dersler.find(d=>d.kod===kod))return notify('Bu ders kodu zaten mevcut.','error');
+  const id=Math.max(0,...STATE.dersler.map(d=>d.id))+1;
+  STATE.dersler.push({id,kod,ad,kredi});
+  closeModal('modal-ders-ekle');
+  ['ekle-ders-kod','ekle-ders-ad'].forEach(f=>document.getElementById(f).value='');
+  renderDersler();
+  notify('Ders eklendi.','success');
+}
+
+// ── BİLDİRİM ─────────────────────────────────────────────────────
+function notify(msg,type='success'){
+  const el=document.getElementById('notify');
+  el.textContent=msg;el.className='notify '+type+' show';
+  setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// ── BOOT ─────────────────────────────────────────────────────────
+initData();
+renderDashboard();
+</script>
+</body>
+</html>
